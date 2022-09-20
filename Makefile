@@ -7,6 +7,7 @@ CLASS_FILE=$(CLASS_DIR)/$(CLASS_NAME).class
 JAR_FILE=target/out-standalone.jar
 LIB_FILE=$(JNI_DIR)/libtest.so
 JAVA_FILE=src-java/Test.java
+JNI_SRC_DIR=src-java
 C_FILE=src-c/Test.c
 C_HEADER=$(JNI_DIR)/Test.h
 INCLUDE_DIRS=$(shell find $(JAVA_HOME)/include -type d)
@@ -21,14 +22,13 @@ $(JAR_FILE): $(CLASS_FILE) $(C_HEADER)
 	lein uberjar
 
 $(CLASS_FILE): $(JAVA_FILE)
-	lein javac
+	mkdir -p $(JNI_DIR)
+	javac -h $(JNI_DIR) -d $(CLASS_DIR) -sourcepath $(JNI_SRC_DIR) $<
 
 header: $(C_HEADER)
 
 $(C_HEADER): $(CLASS_FILE)
-	mkdir -p $(JNI_DIR)
-	javah -o $(C_HEADER) -cp $(CLASS_DIR) $(CLASS_NAME)
-	@touch $(C_HEADER)
+	touch $(C_HEADER)
 
 lib: $(LIB_FILE)
 
