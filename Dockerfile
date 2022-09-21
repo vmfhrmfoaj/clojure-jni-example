@@ -1,7 +1,9 @@
 FROM fedora:latest
 
 # install base dependencies
-RUN dnf install -y java-1.8.0-openjdk-devel make gcc
+RUN dnf -y group install "Development Tools" && \
+    dnf install -y java-17-openjdk-devel && \
+    dnf -y clean all
 
 # set up leiningen
 ENV LEIN_ROOT="true"
