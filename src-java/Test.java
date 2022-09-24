@@ -5,8 +5,13 @@ import java.nio.file.StandardCopyOption;
 
 public class Test {
     static {
+        String arch = System.getProperty("os.arch").toLowerCase();
+        String os   = System.getProperty("os.name").toLowerCase();
         try {
-            InputStream libIn = Thread.currentThread().getContextClassLoader().getResourceAsStream("lib/libtest.so");
+            InputStream libIn = Thread
+                .currentThread()
+                .getContextClassLoader()
+                .getResourceAsStream("lib/libtest."+ arch +"_"+ os);
             File libFile = File.createTempFile("libtest.so", null);
             if (libIn == null) {
                 throw new Exception("No library file");

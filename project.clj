@@ -3,6 +3,7 @@
   :license {:name "MIT"}
   :dependencies [[org.clojure/clojure "1.8.0"]]
   :java-source-paths ["src-java"]
+  :clean-targets ^{:protect false} [:target-path "resources/lib"]
   :aot [clojure-jni-example.core]
   :jar-name "out.jar"
   :auto-clean false

@@ -1,22 +1,19 @@
-.PHONY: run clean
+JAR_FILE=target/out-standalone.jar
+
+.PHONY: run
+run: lib jar
+	java -jar $(JAR_FILE)
+
 
 JNI_DIR=target/jni
 CLASS_DIR=target/classes
 CLASS_NAME=Test
 CLASS_FILE=$(CLASS_DIR)/$(CLASS_NAME).class
-JAR_FILE=target/out-standalone.jar
-LIB_DIR=resources/lib
-LIB_FILE=$(LIB_DIR)/libtest.so
-JAVA_FILE=src-java/Test.java
-JNI_SRC_DIR=src-java
-C_FILE=src-c/Test.c
-C_HEADER=$(JNI_DIR)/Test.h
-INCLUDE_DIRS=$(shell find $(JAVA_HOME)/include -type d)
-INCLUDE_ARGS=$(INCLUDE_DIRS:%=-I%) -I$(JNI_DIR)
+C_HEADER=$(JNI_DIR)/$(CLASS_NAME).h
+JAVA_FILE=src-java/$(CLASS_NAME).java
+JAVA_SRC_DIR=src-java
 
-run: $(LIB_FILE) $(JAR_FILE)
-	java -jar $(JAR_FILE)
-
+.PHONY: jar
 jar: $(JAR_FILE)
 
 $(JAR_FILE): $(CLASS_FILE) $(C_HEADER)
@@ -24,18 +21,36 @@ $(JAR_FILE): $(CLASS_FILE) $(C_HEADER)
 
 $(CLASS_FILE): $(JAVA_FILE)
 	mkdir -p $(JNI_DIR)
-	javac -h $(JNI_DIR) -d $(CLASS_DIR) -sourcepath $(JNI_SRC_DIR) $<
+	javac -h $(JNI_DIR) -d $(CLASS_DIR) -sourcepath $(JAVA_SRC_DIR) $^
 
+
+.PHONY: header
 header: $(C_HEADER)
 
 $(C_HEADER): $(CLASS_FILE)
 	touch $(C_HEADER)
 
-lib: $(LIB_FILE)
 
-$(LIB_FILE): $(C_FILE) $(C_HEADER)
-	$(CC) $(INCLUDE_ARGS) -shared $(C_FILE) -o $(LIB_FILE) -fPIC
+C_FILE=src-c/Test.c
+JAVA_HOME:=$(shell dirname $$(dirname $$(readlink -f $$(which javac))))
+INCLUDE_DIRS:=$(shell find $(JAVA_HOME)/include -type d)
+INCLUDE_ARGS=$(INCLUDE_DIRS:%=-I%) -I$(JNI_DIR)
+LIB_DIR=resources/lib
+AMD64_LIB_FILE=$(LIB_DIR)/libtest.amd64_linux
+AARCH64_LIB_FILE=$(LIB_DIR)/libtest.aarch64_linux
+AARCH64_CC=aarch64-linux-gnu-gcc
 
+.PHONY: lib
+lib: $(AMD64_LIB_FILE) $(AARCH64_LIB_FILE)
+
+$(AMD64_LIB_FILE): $(C_FILE) $(C_HEADER)
+	mkdir -p $(LIB_DIR)
+	$(CC) $(INCLUDE_ARGS) -shared -fPIC -o $@ $^
+
+$(AARCH64_LIB_FILE): $(C_FILE) $(C_HEADER)
+	mkdir -p $(LIB_DIR)
+	$(AARCH64_CC) $(INCLUDE_ARGS) -shared -fPIC -o $@ $^
+
+.PHONY: clean
 clean:
 	lein clean
-	rm -rf $(JNI_DIR)
