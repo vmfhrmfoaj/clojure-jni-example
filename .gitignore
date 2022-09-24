@@ -7,6 +7,5 @@ pom.xml.asc
 *.class
 /.lein-*
 /.nrepl-port
-jni/
-src-c/test.h
-src-c/Test.h
+
+/resources/lib/libtest.so

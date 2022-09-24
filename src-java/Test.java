@@ -1,10 +1,24 @@
+import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+
 public class Test {
     static {
-        System.out.println("Loading C library from Java!");
-        // I could not get System.loadLibrary to work correctly with a .so file.
-        // The downside to this is that you need to have the full, rooted path to the shared library.
-        // Suggestions or tips are welcome!
-        System.load(System.getProperty("user.dir") + "/target/jni/libtest.so");
+        try {
+            InputStream libIn = Thread.currentThread().getContextClassLoader().getResourceAsStream("lib/libtest.so");
+            File libFile = File.createTempFile("libtest.so", null);
+            if (libIn == null) {
+                throw new Exception("No library file");
+            }
+            libFile.deleteOnExit();
+            Files.copy(libIn, libFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+            System.load(libFile.getAbsolutePath());
+        } catch (Exception e) {
+            System.out.println("Unable to load JNI library");
+            e.printStackTrace();
+        }
     }
 
     public static native String print(String name);

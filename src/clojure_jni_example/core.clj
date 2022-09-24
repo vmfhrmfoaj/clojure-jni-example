@@ -1,4 +1,5 @@
 (ns clojure-jni-example.core
+  (:import Test)
   (:gen-class))
 
 (defn -main
