@@ -1,8 +1,10 @@
 (ns clojure-jni-example.core
-  (:import Test)
-  (:gen-class))
+  (:gen-class)
+  (:import Test))
 
-(defn -main
-  []
+(set! *warn-on-reflection* true)
+
+
+(defn -main [& _]
   (println "Hello from Clojure!")
   (Test/print "User"))
