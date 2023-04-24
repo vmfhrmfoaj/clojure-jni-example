@@ -20,8 +20,7 @@ CLJ_FILES      := $(shell find . -name '*.clj' -or -name '*.clj[cs]' 2>/dev/null
 C_FILES        := $(shell find $(C_SRC_DIR)    -name '*.c'    2>/dev/null)
 JAVA_FILES     := $(shell find $(JAVA_SRC_DIR) -name '*.java' 2>/dev/null)
 RESOURCE_FILES := $(shell find resources -name '*' 2>/dev/null)
-JNI_CLASS_FILES  := $(foreach x,$(JAVA_FILES:.java=.class),$(CLASS_DIR)/$(notdir $x))
-JNI_HEADER_FILES := $(foreach x,$(JAVA_FILES:.java=.h),$(JNI_DIR)/$(notdir $x))
+JNI_CLASS_FILES := $(foreach x,$(JAVA_FILES:.java=.class),$(subst $(JAVA_SRC_DIR)/,$(CLASS_DIR)/,$x))
 
 JAR_FILE     := target/$(PROJ_NAME)-$(PROJ_VER).jar
 UBERJAR_FILE := target/$(PROJ_NAME)-$(PROJ_VER)-standalone.jar
@@ -92,7 +91,7 @@ $(INSTALLED_JAR_FILE): $(JAR_FILE)
 
 
 define CLASS_FILE_template
-$(2) $(3): $(1)
+$(2): $(1)
 	@mkdir -p $$(JNI_DIR)
 	@mkdir -p $$(CLASS_DIR)
 	javac -h $$(JNI_DIR) -d $$(CLASS_DIR) -sourcepath $$(JAVA_SRC_DIR) $$^
@@ -104,16 +103,15 @@ classes: $(JNI_CLASS_FILES)
 $(foreach x,$(JAVA_FILES),\
 	$(eval $(call CLASS_FILE_template,\
 		$x,\
-		$(CLASS_DIR)/$(subst .java,.class,$(notdir $x)),\
-		$(JNI_DIR)/$(subst .java,.h,$(notdir $x)))))
+		$(patsubst %.java,%.class,$(subst $(JAVA_SRC_DIR)/,$(CLASS_DIR)/,$x)))))
 
 .PHONY: lib
 lib: $(AMD64_LINUX_LIB_FILE) $(AARCH64_LINUX_LIB_FILE)
 
-$(AMD64_LINUX_LIB_FILE): $(C_FILES) $(JNI_HEADER_FILES)
+$(AMD64_LINUX_LIB_FILE): $(C_FILES) $(JNI_CLASS_FILES)
 	@mkdir -p $(LIB_DIR)
-	$(CC) $(INCLUDE_ARGS) -shared -nostdlib -fPIC -o $@ $^
+	$(CC) $(INCLUDE_ARGS) -shared -nostdlib -fPIC -o $@ $(filter %.c %.h,$^)
 
-$(AARCH64_LINUX_LIB_FILE): $(C_FILE) $(JNI_HEADER_FILES)
+$(AARCH64_LINUX_LIB_FILE): $(C_FILES) $(JNI_CLASS_FILES)
 	@mkdir -p $(LIB_DIR)
-	$(AARCH64_CC) $(INCLUDE_ARGS) -shared -nostdlib -fPIC -o $@ $^
+	$(AARCH64_CC) $(INCLUDE_ARGS) -shared -nostdlib -fPIC -o $@ $(filter %.c %.h,$^)
