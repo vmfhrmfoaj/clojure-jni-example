@@ -8,13 +8,7 @@ PROJ_VER   := $(shell cat project.clj | tr -d '\n' | gawk 'match($$0,/defproject
 C_SRC_DIR    ?= src-c
 JAVA_SRC_DIR ?= src-java
 JNI_DIR      ?= target/jni
-ifneq      (,$(filter uberjar,$(MAKECMDGOALS)))
-CLASS_DIR ?= target/uberjar/classes
-else ifneq (,$(filter test,$(MAKECMDGOALS)))
-CLASS_DIR ?= target/test/classes
-else
-CLASS_DIR ?= target/classes
-endif
+CLASS_DIR    ?= target/jni/classes
 
 CLJ_FILES      := $(shell find . -name '*.clj' -or -name '*.clj[cs]' 2>/dev/null)
 C_FILES        := $(shell find $(C_SRC_DIR)    -name '*.c'    2>/dev/null)
@@ -75,13 +69,14 @@ pom.xml: project.clj
 	$(LEIN) trampoline test-plus ':once'
 	@touch .test
 
-$(JAR_FILE): project.clj $(CLJ_FILES) $(JAVA_FILE) $(C_FILES) $(RESOURCE_FILES)
+$(JAR_FILE): project.clj $(CLJ_FILES) $(JAVA_FILES) $(C_FILES) $(RESOURCE_FILES)
+# `lein install` will generate a jar file, so don't need generate it here.
 ifneq (install,$(MAKECMDGOALS))
-	$(LEIN) jar  # `lein install` will generate a jar file, so don't need generate it here.
+	$(LEIN) jar
 endif
 	@touch $@
 
-$(UBERJAR_FILE): project.clj $(CLJ_FILES) $(JAVA_FILE) $(C_FILES) $(RESOURCE_FILES)
+$(UBERJAR_FILE): project.clj $(CLJ_FILES) $(JAVA_FILES) $(C_FILES) $(RESOURCE_FILES)
 	$(LEIN) uberjar
 	@touch $@
 
@@ -106,7 +101,7 @@ $(foreach x,$(JAVA_FILES),\
 		$(patsubst %.java,%.class,$(subst $(JAVA_SRC_DIR)/,$(CLASS_DIR)/,$x)))))
 
 .PHONY: lib
-lib: $(AMD64_LINUX_LIB_FILE) $(AARCH64_LINUX_LIB_FILE)
+lib: $(LIB_FILES)
 
 $(AMD64_LINUX_LIB_FILE): $(C_FILES) $(JNI_CLASS_FILES)
 	@mkdir -p $(LIB_DIR)

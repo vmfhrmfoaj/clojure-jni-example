@@ -1,6 +1,6 @@
 (ns clojure-jni-example.core
   (:gen-class)
-  (:import Test))
+  (:import clojure_jni_example.Test))
 
 (set! *warn-on-reflection* true)
 
